@@ -1,66 +1,50 @@
 #include <iostream>
-#include <vector>
-#include <climits>
 using namespace std;
 
-struct Process {
-    int id;
-    int burstTime;
-    int arrivalTime;
-    int remainingTime;
-};
-
 int main() {
-    int n;
+    int p[20], bt[20], wt[20], tat[20], n, temp;
     float wtavg = 0, tatavg = 0;
 
     cout << "Enter the number of processes: ";
     cin >> n;
 
-    vector<Process> processes;
     for (int i = 0; i < n; i++) {
-        Process p;
-        p.id = i + 1;
-        cout << "Enter Arrival Time for Process " << p.id << ": ";
-        cin >> p.arrivalTime;
-        cout << "Enter Burst Time for Process " << p.id << ": ";
-        cin >> p.burstTime;
-        p.remainingTime = p.burstTime;
-        processes.push_back(p);
+        p[i] = i + 1;  // Start process numbering from 1
+        cout << "Enter Burst Time for Process " << p[i] << ": ";
+        cin >> bt[i];
+        if (bt[i] < 0) {
+            cout << "Invalid input. Burst time must be non-negative.\n";
+            return 1; // Exit with an error code
+        }
     }
 
-    int currentTime = 0;
-    int completed = 0;
-
-    while (completed < n) {
-        int shortestIndex = -1;
-        int shortestBurst = INT_MAX;
-
-        for (int i = 0; i < n; i++) {
-            if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime < shortestBurst && processes[i].remainingTime > 0) {
-                shortestIndex = i;
-                shortestBurst = processes[i].remainingTime;
+    for (int i = 0; i < n; i++) {
+        for (int k = i + 1; k < n; k++) {
+            if (bt[i] > bt[k]) {
+                // Swap burst time and process ID
+                temp = bt[i];
+                bt[i] = bt[k];
+                bt[k] = temp;
+                temp = p[i];
+                p[i] = p[k];
+                p[k] = temp;
             }
         }
+    }
 
-        if (shortestIndex == -1) {
-            currentTime++;
-        } else {
-            Process& currentProcess = processes[shortestIndex];
-            currentProcess.remainingTime--;
-            currentTime++;
+    wt[0] = 0;
+    tat[0] = bt[0];
 
-            if (currentProcess.remainingTime == 0) {
-                completed++;
-                int turnaroundTime = currentTime - currentProcess.arrivalTime;
-                int waitingTime = turnaroundTime - currentProcess.burstTime;
+    for (int i = 1; i < n; i++) {
+        wt[i] = wt[i - 1] + bt[i - 1];
+        tat[i] = tat[i - 1] + bt[i];
+        wtavg += wt[i];
+        tatavg += tat[i];
+    }
 
-                wtavg += waitingTime;
-                tatavg += turnaroundTime;
-
-                cout << "Process " << currentProcess.id << " completed. Turnaround Time: " << turnaroundTime << " Waiting Time: " << waitingTime << endl;
-            }
-        }
+    cout << "\nPROCESS\tBURST TIME\tWAITING TIME\tTURNAROUND TIME\n";
+    for (int i = 0; i < n; i++) {
+        cout << "P" << p[i] << "\t" << bt[i] << "\t" << wt[i] << "\t" << tat[i] << endl;
     }
 
     cout << "Average Waiting Time: " << wtavg / n << endl;
