@@ -1,0 +1,49 @@
+#include <iostream>
+using namespace std;
+
+int main()
+{
+    int n;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    float wtavg, tatavg;
+    int bt[n], wt[n], tat[n];
+    for (int i = 0; i < n; i++)
+    {
+        cout << "Enter Burst Time for Process " << i << ": ";
+        cin >> bt[i];
+    }
+    wt[0] = wtavg = 0;
+    tat[0] = tatavg = bt[0];
+    for (int i = 1; i < n; i++)
+    {
+        wt[i] = wt[i - 1] + bt[i - 1];
+        tat[i] = tat[i - 1] + bt[i];
+        wtavg += wt[i];
+        tatavg += tat[i];
+    }
+    cout << "\nPROCESS \tBURST TIME \t WAITING TIME\t TURNAROUND TIME";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "\nP" << i << "\t\t" << bt[i] << "\t\t" << wt[i] << "\t\t" << tat[i];
+    }
+    cout << "\n\nAverage Waiting Time: " << wtavg / n << endl;
+    cout << "Average Turnaround Time: " << tatavg / n << endl << endl;
+    return 0;
+}
+
+/*
+INPUT
+Enter the number of processes -- 3
+Enter Burst Time for Process 0 -- 24
+Enter Burst Time for Process 1 -- 3
+Enter Burst Time for Process 2 -- 3
+
+OUTPUT
+PROCESS BURST TIME WAITING TIME TURNAROUND TIME
+P0 24 0 24
+P1 3 24 27
+P2 3 27 30
+Average Waiting Time-- 17.000000
+Average Turnaround Time -- 27.000000
+*/
