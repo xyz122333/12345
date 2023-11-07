@@ -1,102 +1,90 @@
-import java.util.Scanner;
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
 
-class PriorityScheduling {
+struct Process {
+    int id;
+    int burstTime;
+    int priority;
+    int remainingTime;
+};
 
-  public static void main(String[] args) {
-
-    System.out.println("*** Priority Scheduling (Preemptive) ***");
-    System.out.print("Enter Number of Process: ");
-    Scanner sc = new Scanner(System.in);
-    int n = sc.nextInt();
-    int process[] = new int[n];
-    int arrivaltime[] = new int[n];
-    int burstTime[] = new int[n];
-    int completionTime[] = new int[n];
-    int priority[] = new int[n + 1];
-    int TAT[] = new int[n];
-    int waitingTime[] = new int[n];
-    int burstTimecopy[] = new int[n];
-    int min = 0, count = 0;
-    int temp, time = 0, end;
-    double avgWT = 0, avgTAT = 0;
-    for (int i = 0; i < n; i++) {
-      process[i] = (i + 1);
-      System.out.println("");
-      System.out.print("Enter Arrival Time for processor " + (i + 1) + ":");
-      arrivaltime[i] = sc.nextInt();
-      System.out.print("Enter Burst Time for processor " + (i + 1) + " : ");
-      burstTime[i] = sc.nextInt();
-      System.out.print("Enter Priority for " + (i + 1) + " process: ");
-      priority[i] = sc.nextInt();
+struct ComparePriority {
+    bool operator()(const Process& p1, const Process& p2) {
+        return p1.priority > p2.priority;
     }
-    for (int i = 0; i < n - 1; i++) {
-      for (int j = i + 1; j < n; j++) {
-        if (arrivaltime[i] > arrivaltime[j]) {
-          temp = process[i];
-          process[i] = process[j];
-          process[j] = temp;
-          temp = arrivaltime[j];
-          arrivaltime[j] = arrivaltime[i];
-          arrivaltime[i] = temp;
-          temp = priority[j];
-          priority[j] = priority[i];
-          priority[i] = temp;
-          temp = burstTime[j];
-          burstTime[j] = burstTime[i];
-          burstTime[i] = temp;
+};
+
+int main() {
+    int n;
+    float wtavg = 0, tatavg = 0;
+
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    vector<Process> processes(n);
+    for (int i = 0; i < n; i++) {
+        processes[i].id = i + 1;
+        cout << "Enter Burst Time for Process " << processes[i].id << ": ";
+        cin >> processes[i].burstTime;
+        cout << "Enter Priority for Process " << processes[i].id << ": ";
+        cin >> processes[i].priority;
+        processes[i].remainingTime = processes[i].burstTime;
+    }
+
+    int currentTime = 0;
+    priority_queue<Process, vector<Process>, ComparePriority> readyQueue;
+
+    while (true) {
+        for (int i = 0; i < n; i++) {
+            if (processes[i].remainingTime > 0 && processes[i].priority > 0 && processes[i].priority < readyQueue.top().priority) {
+                readyQueue.push(processes[i]);
+                processes[i].priority = 0;
+            }
         }
-        if (arrivaltime[i] == arrivaltime[j] && priority[j] > priority[i]) {
-          temp = process[i];
-          process[i] = process[j];
-          process[j] = temp;
-          temp = arrivaltime[j];
-          arrivaltime[j] = arrivaltime[i];
-          arrivaltime[i] = temp;
-          temp = priority[j];
-          priority[j] = priority[i];
-          priority[i] = temp;
-          temp = burstTime[j];
-          burstTime[j] = burstTime[i];
-          burstTime[i] = temp;
+
+        if (!readyQueue.empty()) {
+            Process currentProcess = readyQueue.top();
+            readyQueue.pop();
+
+            currentProcess.remainingTime--;
+
+            if (currentProcess.remainingTime == 0) {
+                int turnaroundTime = currentTime + 1;
+                int waitingTime = turnaroundTime - currentProcess.burstTime;
+                wtavg += waitingTime;
+                tatavg += turnaroundTime;
+            } else {
+                readyQueue.push(currentProcess);
+            }
+
+            currentTime++;
+        } else {
+            // If the ready queue is empty, no processes can execute.
+            bool allProcessesCompleted = true;
+            for (int i = 0; i < n; i++) {
+                if (processes[i].remainingTime > 0) {
+                    allProcessesCompleted = false;
+                    break;
+                }
+            }
+            if (allProcessesCompleted) {
+                break;
+            } else {
+                currentTime++;
+            }
         }
-      }
-    }
-    System.arraycopy(burstTime, 0, burstTimecopy, 0, n);
-    priority[n] = 999;
-    for (time = 0; count != n; time++) {
-      min = n;
-      for (int i = 0; i < n; i++) {
-        if (arrivaltime[i] <= time && priority[i] < priority[min] && burstTime[i] > 0)
-          min = i;
-      }
-      burstTime[min]--;
-      if (burstTime[min] == 0) {
-        count++;
-        end = time + 1;
-        completionTime[min] = end;
-        waitingTime[min] = end - arrivaltime[min] - burstTimecopy[min];
-        TAT[min] = end - arrivaltime[min];
-      }
     }
 
+    cout << "PROCESS\tBURST TIME\tPRIORITY\tWAITING TIME\tTURNAROUND TIME\n";
     for (int i = 0; i < n; i++) {
-      avgTAT += TAT[i];
-      avgWT += waitingTime[i];
+        cout << processes[i].id << "\t" << processes[i].burstTime << "\t" << processes[i].priority << "\t"
+             << processes[i].burstTime - processes[i].remainingTime << "\t" << processes[i].burstTime - processes[i].remainingTime + (processes[i].burstTime - processes[i].remainingTime) << endl;
     }
-    System.out.println("\n*** Priority Scheduling (Preemptive) ***");
-    System.out.println("Processor\tArrival time\tBrust time\tCompletion Time\t\tTurn around time\tWaiting time");
-    System.out.println(
-        "----------------------------------------------------------------------------------------------------------");
-    for (int i = 0; i < n; i++) {
-      System.out.println("P" + process[i] + "\t\t" + arrivaltime[i] + "ms\t\t" + burstTimecopy[i] + "ms\t\t"
-          + completionTime[i] + "ms\t\t\t" + TAT[i] + "ms\t\t\t" + waitingTime[i] + "ms");
 
-    }
-    avgWT /= n;
-    avgTAT /= n;
-    System.out.println("\nAverage Wating Time: " + avgWT);
-    System.out.println("Average Turn Around Time: " + avgTAT);
+    cout << "Average Waiting Time is: " << wtavg / n << endl;
+    cout << "Average Turnaround Time is: " << tatavg / n << endl;
 
-    sc.close();
-  }
+    return 0;
 }
